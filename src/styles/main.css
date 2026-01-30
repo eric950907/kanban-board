@@ -43,6 +43,7 @@
   --status-backlog: #6b7280;
   --status-todo: #8b5cf6;
   --status-progress: #3b82f6;
+  --status-review: #f59e0b;
   --status-done: #10b981;
   
   /* Spacing */
@@ -353,6 +354,7 @@ input, textarea {
 .column-status-dot.backlog { background: var(--status-backlog); }
 .column-status-dot.todo { background: var(--status-todo); }
 .column-status-dot.progress { background: var(--status-progress); }
+.column-status-dot.review { background: var(--status-review); }
 .column-status-dot.done { background: var(--status-done); }
 
 .column-name {

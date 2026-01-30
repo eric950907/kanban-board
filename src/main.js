@@ -38,6 +38,7 @@ const STATUSES = [
   { id: 'backlog', name: 'Backlog', color: 'backlog' },
   { id: 'todo', name: 'Todo', color: 'todo' },
   { id: 'progress', name: 'In Progress', color: 'progress' },
+  { id: 'review', name: 'Review', color: 'review' },
   { id: 'done', name: 'Done', color: 'done' },
 ];
 
