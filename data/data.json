@@ -1,0 +1,103 @@
+{
+  "projects": [
+    {
+      "id": "proj-1",
+      "name": "Clawdbot",
+      "color": "blue",
+      "createdAt": "2026-01-30T00:00:00Z"
+    },
+    {
+      "id": "proj-2",
+      "name": "个人项目",
+      "color": "purple",
+      "createdAt": "2026-01-30T00:00:00Z"
+    }
+  ],
+  "labels": [
+    { "id": "label-1", "name": "Bug", "color": "red" },
+    { "id": "label-2", "name": "Feature", "color": "blue" },
+    { "id": "label-3", "name": "Enhancement", "color": "purple" },
+    { "id": "label-4", "name": "Documentation", "color": "cyan" },
+    { "id": "label-5", "name": "Design", "color": "pink" },
+    { "id": "label-6", "name": "Urgent", "color": "orange" }
+  ],
+  "tasks": [
+    {
+      "id": "task-1",
+      "projectId": "proj-1",
+      "title": "实现拖拽排序功能",
+      "description": "使用原生 HTML5 Drag & Drop API 实现任务卡片拖拽",
+      "status": "progress",
+      "priority": "high",
+      "labels": ["label-2"],
+      "subtasks": [
+        { "id": "sub-1-1", "title": "设置 draggable 属性", "completed": true },
+        { "id": "sub-1-2", "title": "处理 dragstart/dragend 事件", "completed": true },
+        { "id": "sub-1-3", "title": "实现跨列拖拽", "completed": false }
+      ],
+      "createdAt": "2026-01-30T00:00:00Z"
+    },
+    {
+      "id": "task-2",
+      "projectId": "proj-1",
+      "title": "添加任务详情弹窗",
+      "description": "点击任务卡片时显示详细信息和编辑界面",
+      "status": "todo",
+      "priority": "medium",
+      "labels": ["label-2", "label-5"],
+      "subtasks": [],
+      "createdAt": "2026-01-30T00:00:00Z"
+    },
+    {
+      "id": "task-3",
+      "projectId": "proj-1",
+      "title": "修复样式在 Safari 下的兼容性问题",
+      "description": "",
+      "status": "backlog",
+      "priority": "low",
+      "labels": ["label-1"],
+      "subtasks": [],
+      "createdAt": "2026-01-30T00:00:00Z"
+    },
+    {
+      "id": "task-4",
+      "projectId": "proj-2",
+      "title": "设计新的 Logo",
+      "description": "需要一个现代简洁的 Logo",
+      "status": "todo",
+      "priority": "medium",
+      "labels": ["label-5"],
+      "subtasks": [
+        { "id": "sub-4-1", "title": "收集灵感", "completed": true },
+        { "id": "sub-4-2", "title": "草图设计", "completed": false },
+        { "id": "sub-4-3", "title": "矢量化", "completed": false }
+      ],
+      "createdAt": "2026-01-30T00:00:00Z"
+    },
+    {
+      "id": "task-5",
+      "projectId": "proj-1",
+      "title": "添加键盘快捷键支持",
+      "description": "N = 新建任务, / = 搜索, Esc = 关闭弹窗",
+      "status": "backlog",
+      "priority": "low",
+      "labels": ["label-3"],
+      "subtasks": [],
+      "createdAt": "2026-01-30T00:00:00Z"
+    },
+    {
+      "id": "task-6",
+      "projectId": "proj-1",
+      "title": "完成数据持久化",
+      "description": "使用 localStorage 保存数据",
+      "status": "done",
+      "priority": "urgent",
+      "labels": ["label-2"],
+      "subtasks": [
+        { "id": "sub-6-1", "title": "读取数据", "completed": true },
+        { "id": "sub-6-2", "title": "保存数据", "completed": true }
+      ],
+      "createdAt": "2026-01-30T00:00:00Z"
+    }
+  ]
+}

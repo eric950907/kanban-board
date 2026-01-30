@@ -1,0 +1,14 @@
+{
+  "name": "kanban-board",
+  "version": "1.0.0",
+  "description": "A Linear-inspired task management board with kanban view",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": ["kanban", "task-management", "linear", "productivity"],
+  "author": "eric950907",
+  "license": "MIT"
+}
