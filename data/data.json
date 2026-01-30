@@ -11,6 +11,12 @@
       "name": "个人项目",
       "color": "purple",
       "createdAt": "2026-01-30T00:00:00Z"
+    },
+    {
+      "id": "proj-3",
+      "name": "Kanban Board",
+      "color": "cyan",
+      "createdAt": "2026-01-30T00:00:00Z"
     }
   ],
   "labels": [
@@ -42,7 +48,7 @@
       "projectId": "proj-1",
       "title": "添加任务详情弹窗",
       "description": "点击任务卡片时显示详细信息和编辑界面",
-      "status": "todo",
+      "status": "done",
       "priority": "medium",
       "labels": ["label-2", "label-5"],
       "subtasks": [],
@@ -79,10 +85,14 @@
       "projectId": "proj-1",
       "title": "添加键盘快捷键支持",
       "description": "N = 新建任务, / = 搜索, Esc = 关闭弹窗",
-      "status": "backlog",
+      "status": "done",
       "priority": "low",
       "labels": ["label-3"],
-      "subtasks": [],
+      "subtasks": [
+        { "id": "sub-5-1", "title": "N = 新建任务", "completed": true },
+        { "id": "sub-5-2", "title": "/ = 聚焦搜索", "completed": true },
+        { "id": "sub-5-3", "title": "Esc = 关闭弹窗", "completed": true }
+      ],
       "createdAt": "2026-01-30T00:00:00Z"
     },
     {
@@ -98,6 +108,24 @@
         { "id": "sub-6-2", "title": "保存数据", "completed": true }
       ],
       "createdAt": "2026-01-30T00:00:00Z"
+    },
+    {
+      "id": "task-7",
+      "projectId": "proj-3",
+      "title": "Kanban Board 后续优化",
+      "description": "已完成核心功能，以下是后续可以优化的功能点",
+      "status": "backlog",
+      "priority": "medium",
+      "labels": ["label-3"],
+      "subtasks": [
+        { "id": "sub-7-1", "title": "列内拖拽排序（调整任务顺序）", "completed": false },
+        { "id": "sub-7-2", "title": "右键菜单（快速改状态/优先级/删除）", "completed": false },
+        { "id": "sub-7-3", "title": "快捷键提示面板 (? 键)", "completed": false },
+        { "id": "sub-7-4", "title": "数据导入/导出功能", "completed": false },
+        { "id": "sub-7-5", "title": "拖拽时显示半透明卡片预览", "completed": false },
+        { "id": "sub-7-6", "title": "任务到期日期提醒", "completed": false }
+      ],
+      "createdAt": "2026-01-30T04:00:00Z"
     }
   ]
 }
