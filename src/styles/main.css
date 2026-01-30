@@ -790,6 +790,330 @@ textarea.form-input {
 }
 
 /* ========================================
+   Search Box
+   ======================================== */
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.search-box:focus-within {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 2px rgba(94, 158, 255, 0.1);
+}
+
+.search-box svg {
+  width: 16px;
+  height: 16px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.search-input {
+  width: 160px;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.search-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.search-clear {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  transition: all var(--transition-fast);
+}
+
+.search-clear:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.search-clear svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* ========================================
+   Form Row (Side by Side)
+   ======================================== */
+
+.form-row {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+/* ========================================
+   Label Selector
+   ======================================== */
+
+.label-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.label-option {
+  display: flex;
+  cursor: pointer;
+}
+
+.label-option input {
+  display: none;
+}
+
+.label-chip {
+  font-size: var(--font-size-xs);
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  opacity: 0.5;
+  transition: all var(--transition-fast);
+  border: 1px solid transparent;
+}
+
+.label-option input:checked + .label-chip {
+  opacity: 1;
+  border-color: currentColor;
+}
+
+.label-chip.blue { background: rgba(94, 158, 255, 0.15); color: var(--accent-blue); }
+.label-chip.purple { background: rgba(167, 139, 250, 0.15); color: var(--accent-purple); }
+.label-chip.green { background: rgba(52, 211, 153, 0.15); color: var(--accent-green); }
+.label-chip.yellow { background: rgba(251, 191, 36, 0.15); color: var(--accent-yellow); }
+.label-chip.orange { background: rgba(251, 146, 60, 0.15); color: var(--accent-orange); }
+.label-chip.red { background: rgba(248, 113, 113, 0.15); color: var(--accent-red); }
+.label-chip.pink { background: rgba(244, 114, 182, 0.15); color: var(--accent-pink); }
+.label-chip.cyan { background: rgba(34, 211, 238, 0.15); color: var(--accent-cyan); }
+
+/* ========================================
+   Subtasks in Modal
+   ======================================== */
+
+.subtasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.subtask-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+
+.subtask-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-blue);
+  cursor: pointer;
+}
+
+.subtask-input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.subtask-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.subtask-delete {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  transition: all var(--transition-fast);
+}
+
+.subtask-delete:hover {
+  background: rgba(248, 113, 113, 0.15);
+  color: var(--accent-red);
+}
+
+.subtask-delete svg {
+  width: 14px;
+  height: 14px;
+}
+
+.add-subtask-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  color: var(--text-tertiary);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-sm);
+}
+
+.add-subtask-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.add-subtask-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ========================================
+   Danger Button
+   ======================================== */
+
+.btn-danger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(248, 113, 113, 0.1);
+  color: var(--accent-red);
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.btn-danger:hover {
+  background: rgba(248, 113, 113, 0.2);
+}
+
+.btn-danger svg {
+  width: 16px;
+  height: 16px;
+}
+
+.modal-footer-spacer {
+  flex: 1;
+}
+
+/* ========================================
+   Toast Notification
+   ======================================== */
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  transition: all var(--transition-normal);
+  z-index: 2000;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast-message {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+}
+
+.toast-action {
+  font-size: var(--font-size-sm);
+  color: var(--accent-blue);
+  font-weight: 500;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.toast-action:hover {
+  background: rgba(94, 158, 255, 0.1);
+}
+
+.toast-close {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.toast-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.toast-close svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* ========================================
+   Nav Section Header
+   ======================================== */
+
+.nav-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: var(--space-sm);
+}
+
+.nav-add-btn {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  transition: all var(--transition-fast);
+}
+
+.nav-add-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.nav-add-btn svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* ========================================
    Responsive
    ======================================== */
 
@@ -800,5 +1124,9 @@ textarea.form-input {
   
   :root {
     --column-width: 280px;
+  }
+  
+  .search-input {
+    width: 120px;
   }
 }

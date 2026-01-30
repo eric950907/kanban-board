@@ -13,16 +13,25 @@ const Icons = {
   check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`,
   inbox: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>`,
   folder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
+  trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`,
+  edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
   subtask: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>`,
+  undo: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>`,
 };
 
+// ========================================
 // State
+// ========================================
+
 let state = {
   projects: [],
   labels: [],
   tasks: [],
   currentProject: null,
   draggedTask: null,
+  editingTask: null,
+  searchQuery: '',
+  deletedTask: null, // For undo
 };
 
 const STATUSES = [
@@ -41,13 +50,68 @@ const PRIORITIES = [
 ];
 
 // ========================================
+// Utility Functions
+// ========================================
+
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function generateId() {
+  return 'task-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+}
+
+function debounce(fn, delay) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
+
+function getTasksByStatus(status) {
+  let tasks = state.tasks.filter(t => t.status === status);
+  if (state.currentProject) {
+    tasks = tasks.filter(t => t.projectId === state.currentProject);
+  }
+  if (state.searchQuery) {
+    const query = state.searchQuery.toLowerCase();
+    tasks = tasks.filter(t => 
+      t.title.toLowerCase().includes(query) ||
+      (t.description && t.description.toLowerCase().includes(query))
+    );
+  }
+  return tasks;
+}
+
+function getProjectById(id) {
+  return state.projects.find(p => p.id === id);
+}
+
+function getLabelById(id) {
+  return state.labels.find(l => l.id === id);
+}
+
+function getTaskById(id) {
+  return state.tasks.find(t => t.id === id);
+}
+
+function getCompletedSubtasks(task) {
+  if (!task.subtasks || task.subtasks.length === 0) return null;
+  const completed = task.subtasks.filter(s => s.completed).length;
+  return { completed, total: task.subtasks.length };
+}
+
+// ========================================
 // Data Management
 // ========================================
 
 const STORAGE_KEY = 'kanban-board-data';
 
 async function loadData() {
-  // Try localStorage first
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored) {
     try {
@@ -61,14 +125,13 @@ async function loadData() {
     }
   }
   
-  // Fall back to data.json
   try {
     const response = await fetch('/data/data.json');
     const data = await response.json();
     state.projects = data.projects || [];
     state.labels = data.labels || [];
     state.tasks = data.tasks || [];
-    saveData(); // Save to localStorage
+    saveData();
   } catch (e) {
     console.error('Failed to load data:', e);
     state.projects = [];
@@ -77,7 +140,16 @@ async function loadData() {
   }
 }
 
-function saveData() {
+const saveData = debounce(() => {
+  const data = {
+    projects: state.projects,
+    labels: state.labels,
+    tasks: state.tasks,
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}, 300);
+
+function saveDataImmediate() {
   const data = {
     projects: state.projects,
     labels: state.labels,
@@ -87,33 +159,45 @@ function saveData() {
 }
 
 // ========================================
-// Utility Functions
+// Toast Notifications
 // ========================================
 
-function generateId() {
-  return 'task-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-}
+let toastTimeout = null;
 
-function getTasksByStatus(status) {
-  let tasks = state.tasks.filter(t => t.status === status);
-  if (state.currentProject) {
-    tasks = tasks.filter(t => t.projectId === state.currentProject);
+function showToast(message, action = null, actionLabel = null) {
+  hideToast();
+  
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.id = 'toast';
+  toast.innerHTML = `
+    <span class="toast-message">${escapeHtml(message)}</span>
+    ${action ? `<button class="toast-action" id="toast-action">${escapeHtml(actionLabel)}</button>` : ''}
+    <button class="toast-close" data-action="close-toast">${Icons.close}</button>
+  `;
+  
+  document.body.appendChild(toast);
+  
+  // Trigger animation
+  requestAnimationFrame(() => toast.classList.add('visible'));
+  
+  if (action) {
+    document.getElementById('toast-action')?.addEventListener('click', () => {
+      action();
+      hideToast();
+    });
   }
-  return tasks;
+  
+  toastTimeout = setTimeout(hideToast, 5000);
 }
 
-function getProjectById(id) {
-  return state.projects.find(p => p.id === id);
-}
-
-function getLabelById(id) {
-  return state.labels.find(l => l.id === id);
-}
-
-function getCompletedSubtasks(task) {
-  if (!task.subtasks || task.subtasks.length === 0) return null;
-  const completed = task.subtasks.filter(s => s.completed).length;
-  return { completed, total: task.subtasks.length };
+function hideToast() {
+  clearTimeout(toastTimeout);
+  const toast = document.getElementById('toast');
+  if (toast) {
+    toast.classList.remove('visible');
+    setTimeout(() => toast.remove(), 200);
+  }
 }
 
 // ========================================
@@ -128,10 +212,8 @@ function renderApp() {
       ${renderHeader()}
       ${renderBoard()}
     </div>
-    ${renderModal()}
+    ${renderTaskModal()}
   `;
-  
-  attachEventListeners();
 }
 
 function renderSidebar() {
@@ -152,11 +234,16 @@ function renderSidebar() {
           </div>
         </div>
         <div class="nav-section">
-          <div class="nav-section-title">项目</div>
+          <div class="nav-section-header">
+            <div class="nav-section-title">项目</div>
+            <button class="nav-add-btn" data-action="new-project" title="新建项目">
+              ${Icons.plus}
+            </button>
+          </div>
           ${state.projects.map(project => `
             <div class="nav-item ${state.currentProject === project.id ? 'active' : ''}" data-action="select-project" data-project-id="${project.id}">
               <span class="project-color" style="background: var(--accent-${project.color})"></span>
-              <span>${project.name}</span>
+              <span>${escapeHtml(project.name)}</span>
             </div>
           `).join('')}
         </div>
@@ -167,7 +254,7 @@ function renderSidebar() {
 
 function renderHeader() {
   const currentProject = state.currentProject ? getProjectById(state.currentProject) : null;
-  const title = currentProject ? currentProject.name : '所有任务';
+  const title = currentProject ? escapeHtml(currentProject.name) : '所有任务';
   
   return `
     <header class="header">
@@ -175,12 +262,11 @@ function renderHeader() {
         <h1 class="header-title">${title}</h1>
       </div>
       <div class="header-actions">
-        <button class="icon-btn" title="搜索">
+        <div class="search-box ${state.searchQuery ? 'active' : ''}">
           ${Icons.search}
-        </button>
-        <button class="icon-btn" title="筛选">
-          ${Icons.filter}
-        </button>
+          <input type="text" class="search-input" id="search-input" placeholder="搜索任务..." value="${escapeHtml(state.searchQuery)}">
+          ${state.searchQuery ? `<button class="search-clear" data-action="clear-search">${Icons.close}</button>` : ''}
+        </div>
         <button class="btn-primary" data-action="new-task">
           ${Icons.plus}
           <span>新建任务</span>
@@ -228,7 +314,7 @@ function renderColumn(status) {
 function renderEmptyColumn() {
   return `
     <div class="empty-state">
-      <p>暂无任务</p>
+      <p>拖拽任务到这里</p>
     </div>
   `;
 }
@@ -238,17 +324,17 @@ function renderTaskCard(task) {
   const subtaskProgress = getCompletedSubtasks(task);
   
   return `
-    <div class="task-card" draggable="true" data-task-id="${task.id}">
+    <div class="task-card" draggable="true" data-task-id="${task.id}" data-action="open-task">
       <div class="task-priority ${task.priority}"></div>
       <div class="task-header">
         <span class="task-id">${task.id.split('-').pop().toUpperCase()}</span>
-        <span class="task-title">${task.title}</span>
+        <span class="task-title">${escapeHtml(task.title)}</span>
       </div>
       <div class="task-meta">
         <div class="task-labels">
-          ${task.labels.map(labelId => {
+          ${(task.labels || []).map(labelId => {
             const label = getLabelById(labelId);
-            return label ? `<span class="task-label ${label.color}">${label.name}</span>` : '';
+            return label ? `<span class="task-label ${label.color}">${escapeHtml(label.name)}</span>` : '';
           }).join('')}
         </div>
         ${subtaskProgress ? `
@@ -262,7 +348,7 @@ function renderTaskCard(task) {
         <div class="task-footer">
           <div class="task-project">
             <span class="task-project-dot" style="background: var(--accent-${project.color})"></span>
-            <span>${project.name}</span>
+            <span>${escapeHtml(project.name)}</span>
           </div>
         </div>
       ` : ''}
@@ -270,50 +356,108 @@ function renderTaskCard(task) {
   `;
 }
 
-function renderModal() {
+function renderTaskModal() {
+  const isEdit = !!state.editingTask;
+  const task = state.editingTask || {};
+  
   return `
     <div class="modal-overlay" id="modal-overlay">
       <div class="modal" id="modal">
         <div class="modal-header">
-          <h2 class="modal-title">新建任务</h2>
+          <h2 class="modal-title">${isEdit ? '编辑任务' : '新建任务'}</h2>
           <button class="modal-close" data-action="close-modal">
             ${Icons.close}
           </button>
         </div>
         <div class="modal-body">
           <form id="task-form">
+            <input type="hidden" name="taskId" value="${task.id || ''}">
+            
             <div class="form-group">
               <label class="form-label">标题</label>
-              <input type="text" class="form-input" name="title" placeholder="任务标题" required>
+              <input type="text" class="form-input" name="title" placeholder="任务标题" value="${escapeHtml(task.title || '')}" required>
             </div>
+            
             <div class="form-group">
               <label class="form-label">描述</label>
-              <textarea class="form-input" name="description" placeholder="任务描述（可选）"></textarea>
+              <textarea class="form-input" name="description" placeholder="任务描述（可选）">${escapeHtml(task.description || '')}</textarea>
             </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">项目</label>
+                <select class="form-select" name="projectId">
+                  <option value="">无项目</option>
+                  ${state.projects.map(p => `
+                    <option value="${p.id}" ${task.projectId === p.id ? 'selected' : ''}>${escapeHtml(p.name)}</option>
+                  `).join('')}
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">状态</label>
+                <select class="form-select" name="status">
+                  ${STATUSES.map(s => `
+                    <option value="${s.id}" ${task.status === s.id ? 'selected' : ''}>${s.name}</option>
+                  `).join('')}
+                </select>
+              </div>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">优先级</label>
+                <select class="form-select" name="priority">
+                  ${PRIORITIES.map(p => `
+                    <option value="${p.id}" ${task.priority === p.id ? 'selected' : ''}>${p.name}</option>
+                  `).join('')}
+                </select>
+              </div>
+            </div>
+            
             <div class="form-group">
-              <label class="form-label">项目</label>
-              <select class="form-select" name="projectId">
-                <option value="">无项目</option>
-                ${state.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
-              </select>
+              <label class="form-label">标签</label>
+              <div class="label-selector">
+                ${state.labels.map(label => `
+                  <label class="label-option">
+                    <input type="checkbox" name="labels" value="${label.id}" 
+                      ${(task.labels || []).includes(label.id) ? 'checked' : ''}>
+                    <span class="label-chip ${label.color}">${escapeHtml(label.name)}</span>
+                  </label>
+                `).join('')}
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">状态</label>
-              <select class="form-select" name="status">
-                ${STATUSES.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">优先级</label>
-              <select class="form-select" name="priority">
-                ${PRIORITIES.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
-              </select>
-            </div>
+            
+            ${isEdit ? `
+              <div class="form-group">
+                <label class="form-label">子任务</label>
+                <div class="subtasks-list" id="subtasks-list">
+                  ${(task.subtasks || []).map((sub, idx) => `
+                    <div class="subtask-item" data-subtask-idx="${idx}">
+                      <input type="checkbox" class="subtask-checkbox" ${sub.completed ? 'checked' : ''} data-action="toggle-subtask" data-idx="${idx}">
+                      <input type="text" class="subtask-input" value="${escapeHtml(sub.title)}" data-idx="${idx}">
+                      <button type="button" class="subtask-delete" data-action="delete-subtask" data-idx="${idx}">${Icons.close}</button>
+                    </div>
+                  `).join('')}
+                </div>
+                <button type="button" class="add-subtask-btn" data-action="add-subtask">
+                  ${Icons.plus}
+                  <span>添加子任务</span>
+                </button>
+              </div>
+            ` : ''}
           </form>
         </div>
         <div class="modal-footer">
+          ${isEdit ? `
+            <button class="btn-danger" data-action="delete-task">
+              ${Icons.trash}
+              <span>删除</span>
+            </button>
+            <div class="modal-footer-spacer"></div>
+          ` : ''}
           <button class="btn-secondary" data-action="close-modal">取消</button>
-          <button class="btn-primary" data-action="save-task">创建任务</button>
+          <button class="btn-primary" data-action="save-task">${isEdit ? '保存' : '创建任务'}</button>
         </div>
       </div>
     </div>
@@ -321,33 +465,49 @@ function renderModal() {
 }
 
 // ========================================
-// Event Handlers
+// Event Handling (Single Delegation)
 // ========================================
 
-function attachEventListeners() {
-  // Delegation for clicks
+let listenersAttached = false;
+
+function attachGlobalListeners() {
+  if (listenersAttached) return;
+  listenersAttached = true;
+  
+  // Click delegation
   document.addEventListener('click', handleClick);
-  
-  // Form submission
-  const form = document.getElementById('task-form');
-  if (form) {
-    form.addEventListener('submit', e => e.preventDefault());
-  }
-  
-  // Drag and drop
-  attachDragListeners();
   
   // Keyboard shortcuts
   document.addEventListener('keydown', handleKeydown);
+  
+  // Input delegation
+  document.addEventListener('input', handleInput);
+  
+  // Drag events delegation
+  document.addEventListener('dragstart', handleDragStart);
+  document.addEventListener('dragend', handleDragEnd);
+  document.addEventListener('dragover', handleDragOver);
+  document.addEventListener('dragleave', handleDragLeave);
+  document.addEventListener('drop', handleDrop);
 }
 
 function handleClick(e) {
-  const action = e.target.closest('[data-action]')?.dataset.action;
+  const target = e.target;
+  const actionEl = target.closest('[data-action]');
+  const action = actionEl?.dataset.action;
   
   switch (action) {
     case 'new-task':
+      openModal();
+      break;
     case 'add-task-column':
-      openModal(e.target.closest('[data-status]')?.dataset.status);
+      openModal(actionEl.dataset.status);
+      break;
+    case 'open-task':
+      e.preventDefault();
+      const taskId = actionEl.dataset.taskId;
+      const task = getTaskById(taskId);
+      if (task) openModal(null, task);
       break;
     case 'close-modal':
       closeModal();
@@ -355,32 +515,151 @@ function handleClick(e) {
     case 'save-task':
       saveTask();
       break;
+    case 'delete-task':
+      deleteTask();
+      break;
     case 'view-all':
       state.currentProject = null;
       renderApp();
       break;
     case 'select-project':
-      state.currentProject = e.target.closest('[data-project-id]').dataset.projectId;
+      state.currentProject = actionEl.dataset.projectId;
       renderApp();
+      break;
+    case 'clear-search':
+      state.searchQuery = '';
+      renderApp();
+      break;
+    case 'close-toast':
+      hideToast();
+      break;
+    case 'new-project':
+      createNewProject();
+      break;
+    case 'add-subtask':
+      addSubtask();
+      break;
+    case 'delete-subtask':
+      deleteSubtask(parseInt(actionEl.dataset.idx));
+      break;
+    case 'toggle-subtask':
+      toggleSubtask(parseInt(actionEl.dataset.idx), target.checked);
       break;
   }
   
   // Close modal on overlay click
-  if (e.target.id === 'modal-overlay') {
+  if (target.id === 'modal-overlay') {
     closeModal();
   }
 }
 
 function handleKeydown(e) {
+  const overlay = document.getElementById('modal-overlay');
+  const isModalOpen = overlay?.classList.contains('active');
+  
+  // Escape = Close modal
+  if (e.key === 'Escape') {
+    if (isModalOpen) {
+      closeModal();
+    } else {
+      state.searchQuery = '';
+      renderApp();
+    }
+  }
+  
+  // Don't trigger shortcuts when typing
+  if (e.target.closest('input, textarea, select')) return;
+  
   // N = New task
-  if (e.key === 'n' && !e.target.closest('input, textarea')) {
+  if (e.key === 'n' && !isModalOpen) {
     e.preventDefault();
     openModal();
   }
   
-  // Escape = Close modal
-  if (e.key === 'Escape') {
-    closeModal();
+  // / = Focus search
+  if (e.key === '/' && !isModalOpen) {
+    e.preventDefault();
+    document.getElementById('search-input')?.focus();
+  }
+  
+  // ? = Show shortcuts (future)
+}
+
+function handleInput(e) {
+  const target = e.target;
+  
+  // Search input
+  if (target.id === 'search-input') {
+    state.searchQuery = target.value;
+    // Re-render board only (not full app to keep focus)
+    const boardContainer = document.querySelector('.board-container');
+    if (boardContainer) {
+      boardContainer.outerHTML = renderBoard();
+      attachDragToCards();
+    }
+  }
+}
+
+// ========================================
+// Drag & Drop
+// ========================================
+
+function attachDragToCards() {
+  // Delegated events handle this now
+}
+
+function handleDragStart(e) {
+  const card = e.target.closest('.task-card');
+  if (!card) return;
+  
+  const taskId = card.dataset.taskId;
+  state.draggedTask = taskId;
+  card.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', taskId);
+}
+
+function handleDragEnd(e) {
+  const card = e.target.closest('.task-card');
+  if (card) card.classList.remove('dragging');
+  state.draggedTask = null;
+  
+  document.querySelectorAll('.drag-over').forEach(el => {
+    el.classList.remove('drag-over');
+  });
+}
+
+function handleDragOver(e) {
+  const column = e.target.closest('.column-content');
+  if (!column) return;
+  
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  column.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+  const column = e.target.closest('.column-content');
+  if (column && !column.contains(e.relatedTarget)) {
+    column.classList.remove('drag-over');
+  }
+}
+
+function handleDrop(e) {
+  const column = e.target.closest('.column-content');
+  if (!column) return;
+  
+  e.preventDefault();
+  column.classList.remove('drag-over');
+  
+  const taskId = e.dataTransfer.getData('text/plain');
+  const newStatus = column.dataset.status;
+  
+  const task = state.tasks.find(t => t.id === taskId);
+  if (task && task.status !== newStatus) {
+    task.status = newStatus;
+    saveDataImmediate();
+    renderApp();
   }
 }
 
@@ -388,12 +667,18 @@ function handleKeydown(e) {
 // Modal Functions
 // ========================================
 
-function openModal(defaultStatus = 'todo') {
+function openModal(defaultStatus = 'todo', task = null) {
+  state.editingTask = task ? { ...task, subtasks: [...(task.subtasks || [])] } : null;
+  
+  // Re-render modal content
+  const modalContainer = document.querySelector('.modal-overlay').parentElement;
+  document.querySelector('.modal-overlay').remove();
+  modalContainer.insertAdjacentHTML('beforeend', renderTaskModal());
+  
   const overlay = document.getElementById('modal-overlay');
   const form = document.getElementById('task-form');
   
-  if (form) {
-    form.reset();
+  if (!task && form) {
     form.elements.status.value = defaultStatus;
     if (state.currentProject) {
       form.elements.projectId.value = state.currentProject;
@@ -407,6 +692,7 @@ function openModal(defaultStatus = 'todo') {
 function closeModal() {
   const overlay = document.getElementById('modal-overlay');
   overlay?.classList.remove('active');
+  state.editingTask = null;
 }
 
 function saveTask() {
@@ -419,97 +705,157 @@ function saveTask() {
     return;
   }
   
-  const task = {
-    id: generateId(),
-    projectId: form.elements.projectId.value || null,
-    title: title,
-    description: form.elements.description.value.trim(),
-    status: form.elements.status.value,
-    priority: form.elements.priority.value,
-    labels: [],
-    subtasks: [],
-    createdAt: new Date().toISOString(),
-  };
+  const taskId = form.elements.taskId.value;
+  const isEdit = !!taskId;
   
-  state.tasks.push(task);
-  saveData();
+  // Collect labels
+  const labelCheckboxes = form.querySelectorAll('input[name="labels"]:checked');
+  const labels = Array.from(labelCheckboxes).map(cb => cb.value);
+  
+  // Collect subtasks (for edit mode)
+  let subtasks = [];
+  if (isEdit && state.editingTask) {
+    const subtaskInputs = form.querySelectorAll('.subtask-input');
+    const subtaskChecks = form.querySelectorAll('.subtask-checkbox');
+    subtaskInputs.forEach((input, idx) => {
+      if (input.value.trim()) {
+        subtasks.push({
+          id: state.editingTask.subtasks[idx]?.id || `sub-${Date.now()}-${idx}`,
+          title: input.value.trim(),
+          completed: subtaskChecks[idx]?.checked || false,
+        });
+      }
+    });
+  }
+  
+  if (isEdit) {
+    // Update existing task
+    const task = state.tasks.find(t => t.id === taskId);
+    if (task) {
+      task.title = title;
+      task.description = form.elements.description.value.trim();
+      task.projectId = form.elements.projectId.value || null;
+      task.status = form.elements.status.value;
+      task.priority = form.elements.priority.value;
+      task.labels = labels;
+      task.subtasks = subtasks;
+    }
+  } else {
+    // Create new task
+    const task = {
+      id: generateId(),
+      projectId: form.elements.projectId.value || null,
+      title: title,
+      description: form.elements.description.value.trim(),
+      status: form.elements.status.value,
+      priority: form.elements.priority.value,
+      labels: labels,
+      subtasks: [],
+      createdAt: new Date().toISOString(),
+    };
+    state.tasks.push(task);
+  }
+  
+  saveDataImmediate();
   closeModal();
   renderApp();
 }
 
+function deleteTask() {
+  if (!state.editingTask) return;
+  
+  const taskId = state.editingTask.id;
+  const taskIndex = state.tasks.findIndex(t => t.id === taskId);
+  
+  if (taskIndex === -1) return;
+  
+  // Store for undo
+  state.deletedTask = { task: state.tasks[taskIndex], index: taskIndex };
+  
+  // Remove task
+  state.tasks.splice(taskIndex, 1);
+  saveDataImmediate();
+  closeModal();
+  renderApp();
+  
+  // Show undo toast
+  showToast('任务已删除', undoDelete, '撤销');
+}
+
+function undoDelete() {
+  if (!state.deletedTask) return;
+  
+  state.tasks.splice(state.deletedTask.index, 0, state.deletedTask.task);
+  state.deletedTask = null;
+  saveDataImmediate();
+  renderApp();
+}
+
 // ========================================
-// Drag & Drop
+// Subtask Functions
 // ========================================
 
-function attachDragListeners() {
-  const cards = document.querySelectorAll('.task-card');
-  const columns = document.querySelectorAll('.column-content');
+function addSubtask() {
+  if (!state.editingTask) return;
   
-  cards.forEach(card => {
-    card.addEventListener('dragstart', handleDragStart);
-    card.addEventListener('dragend', handleDragEnd);
+  state.editingTask.subtasks = state.editingTask.subtasks || [];
+  state.editingTask.subtasks.push({
+    id: `sub-${Date.now()}`,
+    title: '',
+    completed: false,
   });
   
-  columns.forEach(column => {
-    column.addEventListener('dragover', handleDragOver);
-    column.addEventListener('dragleave', handleDragLeave);
-    column.addEventListener('drop', handleDrop);
-  });
-}
-
-function handleDragStart(e) {
-  const taskId = e.target.dataset.taskId;
-  state.draggedTask = taskId;
-  e.target.classList.add('dragging');
-  e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', taskId);
-}
-
-function handleDragEnd(e) {
-  e.target.classList.remove('dragging');
-  state.draggedTask = null;
-  
-  // Remove all drag-over states
-  document.querySelectorAll('.drag-over').forEach(el => {
-    el.classList.remove('drag-over');
-  });
-}
-
-function handleDragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  
-  const column = e.target.closest('.column-content');
-  if (column) {
-    column.classList.add('drag-over');
+  // Re-render subtasks list
+  const list = document.getElementById('subtasks-list');
+  if (list) {
+    const idx = state.editingTask.subtasks.length - 1;
+    const sub = state.editingTask.subtasks[idx];
+    list.insertAdjacentHTML('beforeend', `
+      <div class="subtask-item" data-subtask-idx="${idx}">
+        <input type="checkbox" class="subtask-checkbox" data-action="toggle-subtask" data-idx="${idx}">
+        <input type="text" class="subtask-input" value="" data-idx="${idx}" placeholder="子任务标题...">
+        <button type="button" class="subtask-delete" data-action="delete-subtask" data-idx="${idx}">${Icons.close}</button>
+      </div>
+    `);
+    list.querySelector(`.subtask-item:last-child .subtask-input`)?.focus();
   }
 }
 
-function handleDragLeave(e) {
-  const column = e.target.closest('.column-content');
-  if (column && !column.contains(e.relatedTarget)) {
-    column.classList.remove('drag-over');
-  }
+function deleteSubtask(idx) {
+  if (!state.editingTask) return;
+  
+  state.editingTask.subtasks.splice(idx, 1);
+  
+  // Re-render modal
+  openModal(null, state.editingTask);
 }
 
-function handleDrop(e) {
-  e.preventDefault();
+function toggleSubtask(idx, completed) {
+  if (!state.editingTask || !state.editingTask.subtasks[idx]) return;
+  state.editingTask.subtasks[idx].completed = completed;
+}
+
+// ========================================
+// Project Functions
+// ========================================
+
+function createNewProject() {
+  const name = prompt('项目名称:');
+  if (!name?.trim()) return;
   
-  const column = e.target.closest('.column-content');
-  if (!column) return;
+  const colors = ['blue', 'purple', 'green', 'yellow', 'orange', 'red', 'pink', 'cyan'];
+  const color = colors[state.projects.length % colors.length];
   
-  column.classList.remove('drag-over');
+  const project = {
+    id: 'proj-' + Date.now(),
+    name: name.trim(),
+    color: color,
+    createdAt: new Date().toISOString(),
+  };
   
-  const taskId = e.dataTransfer.getData('text/plain');
-  const newStatus = column.dataset.status;
-  
-  // Update task status
-  const task = state.tasks.find(t => t.id === taskId);
-  if (task && task.status !== newStatus) {
-    task.status = newStatus;
-    saveData();
-    renderApp();
-  }
+  state.projects.push(project);
+  saveDataImmediate();
+  renderApp();
 }
 
 // ========================================
@@ -519,6 +865,7 @@ function handleDrop(e) {
 async function init() {
   await loadData();
   renderApp();
+  attachGlobalListeners();
 }
 
 init();
