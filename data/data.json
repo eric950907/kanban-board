@@ -30,22 +30,23 @@
   "tasks": [
     {
       "id": "task-1",
-      "projectId": "proj-1",
+      "projectId": "proj-3",
       "title": "实现拖拽排序功能",
       "description": "使用原生 HTML5 Drag & Drop API 实现任务卡片拖拽",
-      "status": "progress",
+      "instructions": "1. 设置 draggable=\"true\" 属性\n2. 监听 dragstart/dragend 事件\n3. 实现跨列拖拽（更新任务状态）\n4. 添加拖拽视觉反馈\n\n验收标准：\n- 任务卡片可拖拽\n- 拖到其他列时状态自动更新\n- 有拖拽时的视觉效果",
+      "status": "review",
       "priority": "high",
       "labels": ["label-2"],
       "subtasks": [
         { "id": "sub-1-1", "title": "设置 draggable 属性", "completed": true },
         { "id": "sub-1-2", "title": "处理 dragstart/dragend 事件", "completed": true },
-        { "id": "sub-1-3", "title": "实现跨列拖拽", "completed": false }
+        { "id": "sub-1-3", "title": "实现跨列拖拽", "completed": true }
       ],
       "createdAt": "2026-01-30T00:00:00Z"
     },
     {
       "id": "task-2",
-      "projectId": "proj-1",
+      "projectId": "proj-3",
       "title": "添加任务详情弹窗",
       "description": "点击任务卡片时显示详细信息和编辑界面",
       "instructions": "1. 创建详情视图模板 renderTaskDetailView()\n2. 添加操作流程字段 instructions\n3. 实现子任务在详情页的勾选功能\n4. 添加编辑按钮切换到编辑模式\n5. 样式优化：左侧主内容 + 右侧元信息侧边栏\n\n验收标准：\n- 点击任务卡片显示详情页\n- 详情页显示标题、描述、操作流程\n- 可以直接勾选子任务\n- 点击编辑进入编辑模式",
@@ -61,8 +62,90 @@
       "createdAt": "2026-01-30T00:00:00Z"
     },
     {
+      "id": "task-5",
+      "projectId": "proj-3",
+      "title": "添加键盘快捷键支持",
+      "description": "N = 新建任务, / = 搜索, Esc = 关闭弹窗",
+      "instructions": "1. 监听 keydown 事件\n2. N 键打开新建任务弹窗\n3. / 键聚焦搜索框\n4. Esc 关闭弹窗或清空搜索\n\n验收标准：\n- 快捷键在非输入状态下生效\n- 输入框内不触发快捷键",
+      "status": "review",
+      "priority": "low",
+      "labels": ["label-3"],
+      "subtasks": [
+        { "id": "sub-5-1", "title": "N = 新建任务", "completed": true },
+        { "id": "sub-5-2", "title": "/ = 聚焦搜索", "completed": true },
+        { "id": "sub-5-3", "title": "Esc = 关闭弹窗", "completed": true }
+      ],
+      "createdAt": "2026-01-30T00:00:00Z"
+    },
+    {
+      "id": "task-6",
+      "projectId": "proj-3",
+      "title": "完成数据持久化",
+      "description": "使用 localStorage 保存数据",
+      "instructions": "1. 定义 STORAGE_KEY\n2. loadData() 优先从 localStorage 读取\n3. saveData() 写入 localStorage\n4. 添加防抖避免频繁写入\n\n验收标准：\n- 刷新页面数据不丢失\n- 新增/编辑/删除任务后自动保存",
+      "status": "review",
+      "priority": "urgent",
+      "labels": ["label-2"],
+      "subtasks": [
+        { "id": "sub-6-1", "title": "读取数据", "completed": true },
+        { "id": "sub-6-2", "title": "保存数据", "completed": true }
+      ],
+      "createdAt": "2026-01-30T00:00:00Z"
+    },
+    {
+      "id": "task-8",
+      "projectId": "proj-3",
+      "title": "添加 Review 状态列",
+      "description": "在 In Progress 和 Done 之间添加 Review 列",
+      "instructions": "1. 在 STATUSES 数组添加 review\n2. 添加 CSS 变量 --status-review\n3. 添加状态点样式\n\n验收标准：\n- 看板显示 5 列\n- Review 列为橙色",
+      "status": "review",
+      "priority": "medium",
+      "labels": ["label-2"],
+      "subtasks": [
+        { "id": "sub-8-1", "title": "添加 STATUSES 配置", "completed": true },
+        { "id": "sub-8-2", "title": "添加 CSS 样式", "completed": true }
+      ],
+      "createdAt": "2026-01-30T04:00:00Z"
+    },
+    {
+      "id": "task-9",
+      "projectId": "proj-3",
+      "title": "列内拖拽排序",
+      "description": "在同一列内调整任务顺序",
+      "instructions": "1. 跟踪拖拽位置（哪个任务上方/下方）\n2. 计算插入索引\n3. 更新 tasks 数组顺序\n4. 添加插入指示线\n\n验收标准：\n- 同列内可拖拽调整顺序\n- 有插入位置指示",
+      "status": "todo",
+      "priority": "medium",
+      "labels": ["label-3"],
+      "subtasks": [],
+      "createdAt": "2026-01-30T04:30:00Z"
+    },
+    {
+      "id": "task-10",
+      "projectId": "proj-3",
+      "title": "右键菜单",
+      "description": "右键任务卡片显示快捷操作菜单",
+      "instructions": "1. 监听 contextmenu 事件\n2. 创建菜单组件\n3. 菜单项：改状态、改优先级、删除\n4. 点击外部关闭菜单\n\n验收标准：\n- 右键显示菜单\n- 可快速更改状态和优先级\n- 可删除任务",
+      "status": "todo",
+      "priority": "low",
+      "labels": ["label-3"],
+      "subtasks": [],
+      "createdAt": "2026-01-30T04:30:00Z"
+    },
+    {
+      "id": "task-11",
+      "projectId": "proj-3",
+      "title": "数据导入/导出",
+      "description": "支持导出 JSON 和导入数据",
+      "instructions": "1. 添加导出按钮，下载 JSON 文件\n2. 添加导入按钮，选择文件并加载\n3. 导入前确认覆盖提示\n\n验收标准：\n- 可导出当前数据为 JSON\n- 可导入 JSON 恢复数据",
+      "status": "todo",
+      "priority": "low",
+      "labels": ["label-2"],
+      "subtasks": [],
+      "createdAt": "2026-01-30T04:30:00Z"
+    },
+    {
       "id": "task-3",
-      "projectId": "proj-1",
+      "projectId": "proj-3",
       "title": "修复样式在 Safari 下的兼容性问题",
       "description": "",
       "status": "backlog",
@@ -85,53 +168,6 @@
         { "id": "sub-4-3", "title": "矢量化", "completed": false }
       ],
       "createdAt": "2026-01-30T00:00:00Z"
-    },
-    {
-      "id": "task-5",
-      "projectId": "proj-1",
-      "title": "添加键盘快捷键支持",
-      "description": "N = 新建任务, / = 搜索, Esc = 关闭弹窗",
-      "status": "review",
-      "priority": "low",
-      "labels": ["label-3"],
-      "subtasks": [
-        { "id": "sub-5-1", "title": "N = 新建任务", "completed": true },
-        { "id": "sub-5-2", "title": "/ = 聚焦搜索", "completed": true },
-        { "id": "sub-5-3", "title": "Esc = 关闭弹窗", "completed": true }
-      ],
-      "createdAt": "2026-01-30T00:00:00Z"
-    },
-    {
-      "id": "task-6",
-      "projectId": "proj-1",
-      "title": "完成数据持久化",
-      "description": "使用 localStorage 保存数据",
-      "status": "review",
-      "priority": "urgent",
-      "labels": ["label-2"],
-      "subtasks": [
-        { "id": "sub-6-1", "title": "读取数据", "completed": true },
-        { "id": "sub-6-2", "title": "保存数据", "completed": true }
-      ],
-      "createdAt": "2026-01-30T00:00:00Z"
-    },
-    {
-      "id": "task-7",
-      "projectId": "proj-3",
-      "title": "Kanban Board 后续优化",
-      "description": "已完成核心功能，以下是后续可以优化的功能点",
-      "status": "backlog",
-      "priority": "medium",
-      "labels": ["label-3"],
-      "subtasks": [
-        { "id": "sub-7-1", "title": "列内拖拽排序（调整任务顺序）", "completed": false },
-        { "id": "sub-7-2", "title": "右键菜单（快速改状态/优先级/删除）", "completed": false },
-        { "id": "sub-7-3", "title": "快捷键提示面板 (? 键)", "completed": false },
-        { "id": "sub-7-4", "title": "数据导入/导出功能", "completed": false },
-        { "id": "sub-7-5", "title": "拖拽时显示半透明卡片预览", "completed": false },
-        { "id": "sub-7-6", "title": "任务到期日期提醒", "completed": false }
-      ],
-      "createdAt": "2026-01-30T04:00:00Z"
     }
   ]
 }
