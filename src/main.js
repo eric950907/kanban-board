@@ -30,6 +30,7 @@ let state = {
   currentProject: null,
   draggedTask: null,
   editingTask: null,
+  isEditingMode: false,
   searchQuery: '',
   deletedTask: null, // For undo
 };
@@ -360,6 +361,11 @@ function renderTaskCard(task) {
 function renderTaskModal() {
   const isEdit = !!state.editingTask;
   const task = state.editingTask || {};
+  const isViewMode = isEdit && !state.isEditingMode;
+  
+  if (isEdit && isViewMode) {
+    return renderTaskDetailView(task);
+  }
   
   return `
     <div class="modal-overlay" id="modal-overlay">
@@ -382,6 +388,11 @@ function renderTaskModal() {
             <div class="form-group">
               <label class="form-label">描述</label>
               <textarea class="form-input" name="description" placeholder="任务描述（可选）">${escapeHtml(task.description || '')}</textarea>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">操作流程</label>
+              <textarea class="form-input form-textarea-lg" name="instructions" placeholder="详细描述如何完成这个任务...&#10;&#10;例如：&#10;1. 第一步做什么&#10;2. 第二步做什么&#10;3. 验收标准">${escapeHtml(task.instructions || '')}</textarea>
             </div>
             
             <div class="form-row">
@@ -429,24 +440,22 @@ function renderTaskModal() {
               </div>
             </div>
             
-            ${isEdit ? `
-              <div class="form-group">
-                <label class="form-label">子任务</label>
-                <div class="subtasks-list" id="subtasks-list">
-                  ${(task.subtasks || []).map((sub, idx) => `
-                    <div class="subtask-item" data-subtask-idx="${idx}">
-                      <input type="checkbox" class="subtask-checkbox" ${sub.completed ? 'checked' : ''} data-action="toggle-subtask" data-idx="${idx}">
-                      <input type="text" class="subtask-input" value="${escapeHtml(sub.title)}" data-idx="${idx}">
-                      <button type="button" class="subtask-delete" data-action="delete-subtask" data-idx="${idx}">${Icons.close}</button>
-                    </div>
-                  `).join('')}
-                </div>
-                <button type="button" class="add-subtask-btn" data-action="add-subtask">
-                  ${Icons.plus}
-                  <span>添加子任务</span>
-                </button>
+            <div class="form-group">
+              <label class="form-label">子任务</label>
+              <div class="subtasks-list" id="subtasks-list">
+                ${(task.subtasks || []).map((sub, idx) => `
+                  <div class="subtask-item" data-subtask-idx="${idx}">
+                    <input type="checkbox" class="subtask-checkbox" ${sub.completed ? 'checked' : ''} data-action="toggle-subtask" data-idx="${idx}">
+                    <input type="text" class="subtask-input" value="${escapeHtml(sub.title)}" data-idx="${idx}">
+                    <button type="button" class="subtask-delete" data-action="delete-subtask" data-idx="${idx}">${Icons.close}</button>
+                  </div>
+                `).join('')}
               </div>
-            ` : ''}
+              <button type="button" class="add-subtask-btn" data-action="add-subtask">
+                ${Icons.plus}
+                <span>添加子任务</span>
+              </button>
+            </div>
           </form>
         </div>
         <div class="modal-footer">
@@ -463,6 +472,181 @@ function renderTaskModal() {
       </div>
     </div>
   `;
+}
+
+function renderTaskDetailView(task) {
+  const project = getProjectById(task.projectId);
+  const status = STATUSES.find(s => s.id === task.status);
+  const priority = PRIORITIES.find(p => p.id === task.priority);
+  const subtaskProgress = getCompletedSubtasks(task);
+  
+  return `
+    <div class="modal-overlay" id="modal-overlay">
+      <div class="modal modal-lg" id="modal">
+        <div class="modal-header">
+          <div class="detail-header-left">
+            <span class="detail-task-id">${task.id.split('-').pop().toUpperCase()}</span>
+            ${project ? `
+              <span class="detail-project">
+                <span class="project-dot" style="background: var(--accent-${project.color})"></span>
+                ${escapeHtml(project.name)}
+              </span>
+            ` : ''}
+          </div>
+          <div class="detail-header-actions">
+            <button class="icon-btn" data-action="edit-mode" title="编辑">
+              ${Icons.edit}
+            </button>
+            <button class="modal-close" data-action="close-modal">
+              ${Icons.close}
+            </button>
+          </div>
+        </div>
+        
+        <div class="modal-body detail-body">
+          <div class="detail-main">
+            <h1 class="detail-title">${escapeHtml(task.title)}</h1>
+            
+            ${task.description ? `
+              <div class="detail-section">
+                <h3 class="detail-section-title">描述</h3>
+                <p class="detail-description">${escapeHtml(task.description)}</p>
+              </div>
+            ` : ''}
+            
+            ${task.instructions ? `
+              <div class="detail-section">
+                <h3 class="detail-section-title">📋 操作流程</h3>
+                <div class="detail-instructions">${formatInstructions(task.instructions)}</div>
+              </div>
+            ` : `
+              <div class="detail-section">
+                <h3 class="detail-section-title">📋 操作流程</h3>
+                <p class="detail-empty">暂无操作流程，点击编辑添加</p>
+              </div>
+            `}
+            
+            ${task.subtasks && task.subtasks.length > 0 ? `
+              <div class="detail-section">
+                <h3 class="detail-section-title">
+                  子任务
+                  ${subtaskProgress ? `<span class="subtask-count">${subtaskProgress.completed}/${subtaskProgress.total}</span>` : ''}
+                </h3>
+                <div class="detail-subtasks">
+                  ${task.subtasks.map((sub, idx) => `
+                    <div class="detail-subtask ${sub.completed ? 'completed' : ''}" data-action="toggle-subtask-detail" data-idx="${idx}">
+                      <span class="subtask-check">${sub.completed ? Icons.check : ''}</span>
+                      <span class="subtask-title">${escapeHtml(sub.title)}</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+          </div>
+          
+          <div class="detail-sidebar">
+            <div class="detail-meta-item">
+              <span class="meta-label">状态</span>
+              <span class="meta-value status-badge ${status?.color || ''}">${status?.name || '未知'}</span>
+            </div>
+            
+            <div class="detail-meta-item">
+              <span class="meta-label">优先级</span>
+              <span class="meta-value priority-badge ${priority?.id || ''}">${priority?.name || '无'}</span>
+            </div>
+            
+            ${task.labels && task.labels.length > 0 ? `
+              <div class="detail-meta-item">
+                <span class="meta-label">标签</span>
+                <div class="meta-labels">
+                  ${task.labels.map(labelId => {
+                    const label = getLabelById(labelId);
+                    return label ? `<span class="task-label ${label.color}">${escapeHtml(label.name)}</span>` : '';
+                  }).join('')}
+                </div>
+              </div>
+            ` : ''}
+            
+            <div class="detail-meta-item">
+              <span class="meta-label">创建时间</span>
+              <span class="meta-value">${formatDate(task.createdAt)}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button class="btn-danger" data-action="delete-task">
+            ${Icons.trash}
+            <span>删除</span>
+          </button>
+          <div class="modal-footer-spacer"></div>
+          <button class="btn-secondary" data-action="close-modal">关闭</button>
+          <button class="btn-primary" data-action="edit-mode">
+            ${Icons.edit}
+            <span>编辑</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function formatInstructions(text) {
+  if (!text) return '';
+  
+  // Convert line breaks to HTML and handle numbered lists
+  const lines = text.split('\n');
+  let html = '';
+  let inList = false;
+  
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      if (inList) {
+        html += '</ol>';
+        inList = false;
+      }
+      html += '<br>';
+      return;
+    }
+    
+    // Check for numbered list (1. 2. 3. etc)
+    const listMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
+    if (listMatch) {
+      if (!inList) {
+        html += '<ol class="instruction-list">';
+        inList = true;
+      }
+      html += `<li>${escapeHtml(listMatch[2])}</li>`;
+    } else {
+      if (inList) {
+        html += '</ol>';
+        inList = false;
+      }
+      // Check for bullet points
+      if (trimmed.startsWith('- ') || trimmed.startsWith('• ')) {
+        html += `<div class="instruction-bullet">• ${escapeHtml(trimmed.slice(2))}</div>`;
+      } else {
+        html += `<p>${escapeHtml(trimmed)}</p>`;
+      }
+    }
+  });
+  
+  if (inList) {
+    html += '</ol>';
+  }
+  
+  return html;
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '未知';
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'short', day: 'numeric' });
+  } catch {
+    return '未知';
+  }
 }
 
 // ========================================
@@ -508,7 +692,14 @@ function handleClick(e) {
       e.preventDefault();
       const taskId = actionEl.dataset.taskId;
       const task = getTaskById(taskId);
-      if (task) openModal(null, task);
+      if (task) {
+        state.isEditingMode = false;
+        openModal(null, task);
+      }
+      break;
+    case 'edit-mode':
+      state.isEditingMode = true;
+      openModal(null, state.editingTask);
       break;
     case 'close-modal':
       closeModal();
@@ -545,6 +736,19 @@ function handleClick(e) {
       break;
     case 'toggle-subtask':
       toggleSubtask(parseInt(actionEl.dataset.idx), target.checked);
+      break;
+    case 'toggle-subtask-detail':
+      const idx = parseInt(actionEl.dataset.idx);
+      if (state.editingTask && state.editingTask.subtasks[idx]) {
+        state.editingTask.subtasks[idx].completed = !state.editingTask.subtasks[idx].completed;
+        // Update the actual task
+        const actualTask = state.tasks.find(t => t.id === state.editingTask.id);
+        if (actualTask) {
+          actualTask.subtasks = [...state.editingTask.subtasks];
+          saveDataImmediate();
+        }
+        openModal(null, state.editingTask);
+      }
       break;
   }
   
@@ -713,6 +917,9 @@ function saveTask() {
   const labelCheckboxes = form.querySelectorAll('input[name="labels"]:checked');
   const labels = Array.from(labelCheckboxes).map(cb => cb.value);
   
+  // Get instructions
+  const instructions = form.elements.instructions?.value?.trim() || '';
+  
   // Collect subtasks (for edit mode)
   let subtasks = [];
   if (isEdit && state.editingTask) {
@@ -735,6 +942,7 @@ function saveTask() {
     if (task) {
       task.title = title;
       task.description = form.elements.description.value.trim();
+      task.instructions = instructions;
       task.projectId = form.elements.projectId.value || null;
       task.status = form.elements.status.value;
       task.priority = form.elements.priority.value;
@@ -748,6 +956,7 @@ function saveTask() {
       projectId: form.elements.projectId.value || null,
       title: title,
       description: form.elements.description.value.trim(),
+      instructions: instructions,
       status: form.elements.status.value,
       priority: form.elements.priority.value,
       labels: labels,

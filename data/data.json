@@ -48,10 +48,16 @@
       "projectId": "proj-1",
       "title": "添加任务详情弹窗",
       "description": "点击任务卡片时显示详细信息和编辑界面",
-      "status": "done",
+      "instructions": "1. 创建详情视图模板 renderTaskDetailView()\n2. 添加操作流程字段 instructions\n3. 实现子任务在详情页的勾选功能\n4. 添加编辑按钮切换到编辑模式\n5. 样式优化：左侧主内容 + 右侧元信息侧边栏\n\n验收标准：\n- 点击任务卡片显示详情页\n- 详情页显示标题、描述、操作流程\n- 可以直接勾选子任务\n- 点击编辑进入编辑模式",
+      "status": "review",
       "priority": "medium",
       "labels": ["label-2", "label-5"],
-      "subtasks": [],
+      "subtasks": [
+        { "id": "sub-2-1", "title": "创建详情视图模板", "completed": true },
+        { "id": "sub-2-2", "title": "添加操作流程字段", "completed": true },
+        { "id": "sub-2-3", "title": "实现子任务勾选", "completed": true },
+        { "id": "sub-2-4", "title": "样式优化", "completed": true }
+      ],
       "createdAt": "2026-01-30T00:00:00Z"
     },
     {
@@ -85,7 +91,7 @@
       "projectId": "proj-1",
       "title": "添加键盘快捷键支持",
       "description": "N = 新建任务, / = 搜索, Esc = 关闭弹窗",
-      "status": "done",
+      "status": "review",
       "priority": "low",
       "labels": ["label-3"],
       "subtasks": [
@@ -100,7 +106,7 @@
       "projectId": "proj-1",
       "title": "完成数据持久化",
       "description": "使用 localStorage 保存数据",
-      "status": "done",
+      "status": "review",
       "priority": "urgent",
       "labels": ["label-2"],
       "subtasks": [

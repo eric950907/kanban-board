@@ -1115,6 +1115,251 @@ textarea.form-input {
   height: 12px;
 }
 
+.form-textarea-lg {
+  min-height: 120px;
+}
+
+/* ========================================
+   Task Detail View
+   ======================================== */
+
+.modal-lg {
+  max-width: 800px;
+}
+
+.detail-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.detail-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.detail-task-id {
+  font-size: var(--font-size-xs);
+  font-family: 'SF Mono', 'Menlo', monospace;
+  color: var(--text-tertiary);
+  background: var(--bg-tertiary);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.detail-project {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.project-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.detail-body {
+  display: flex;
+  gap: var(--space-xl);
+}
+
+.detail-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.detail-sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--border-subtle);
+  padding-left: var(--space-xl);
+}
+
+.detail-title {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  margin-bottom: var(--space-lg);
+  line-height: 1.3;
+}
+
+.detail-section {
+  margin-bottom: var(--space-xl);
+}
+
+.detail-section-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.subtask-count {
+  font-weight: 400;
+  color: var(--text-tertiary);
+}
+
+.detail-description {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.detail-empty {
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+/* Instructions Formatting */
+.detail-instructions {
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.detail-instructions p {
+  margin-bottom: var(--space-sm);
+}
+
+.detail-instructions ol.instruction-list {
+  margin: var(--space-md) 0;
+  padding-left: var(--space-xl);
+}
+
+.detail-instructions ol.instruction-list li {
+  margin-bottom: var(--space-sm);
+  padding-left: var(--space-xs);
+}
+
+.detail-instructions ol.instruction-list li::marker {
+  color: var(--accent-blue);
+  font-weight: 600;
+}
+
+.detail-instructions .instruction-bullet {
+  margin-bottom: var(--space-xs);
+  padding-left: var(--space-md);
+  position: relative;
+}
+
+/* Detail Subtasks */
+.detail-subtasks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.detail-subtask {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.detail-subtask:hover {
+  background: var(--bg-hover);
+}
+
+.detail-subtask.completed .subtask-title {
+  text-decoration: line-through;
+  color: var(--text-tertiary);
+}
+
+.subtask-check {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.detail-subtask.completed .subtask-check {
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+  color: white;
+}
+
+.subtask-check svg {
+  width: 12px;
+  height: 12px;
+}
+
+.subtask-title {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+}
+
+/* Detail Sidebar Meta */
+.detail-meta-item {
+  margin-bottom: var(--space-lg);
+}
+
+.meta-label {
+  display: block;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-xs);
+}
+
+.meta-value {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+}
+
+.meta-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+/* Status Badge */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+.status-badge.backlog { background: rgba(107, 114, 128, 0.15); color: var(--status-backlog); }
+.status-badge.todo { background: rgba(139, 92, 246, 0.15); color: var(--status-todo); }
+.status-badge.progress { background: rgba(59, 130, 246, 0.15); color: var(--status-progress); }
+.status-badge.review { background: rgba(245, 158, 11, 0.15); color: var(--status-review); }
+.status-badge.done { background: rgba(16, 185, 129, 0.15); color: var(--status-done); }
+
+/* Priority Badge */
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+.priority-badge.urgent { background: rgba(239, 68, 68, 0.15); color: var(--priority-urgent); }
+.priority-badge.high { background: rgba(249, 115, 22, 0.15); color: var(--priority-high); }
+.priority-badge.medium { background: rgba(234, 179, 8, 0.15); color: var(--priority-medium); }
+.priority-badge.low { background: rgba(107, 114, 128, 0.15); color: var(--priority-low); }
+.priority-badge.none { background: var(--bg-tertiary); color: var(--text-tertiary); }
+
 /* ========================================
    Responsive
    ======================================== */
