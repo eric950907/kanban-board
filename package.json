@@ -4,11 +4,28 @@
   "description": "A Linear-inspired task management board with kanban view",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev:frontend": "vite",
+    "dev:backend": "node server.js",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "build": "vite build",
     "preview": "vite preview"
   },
-  "keywords": ["kanban", "task-management", "linear", "productivity"],
+  "keywords": [
+    "kanban",
+    "task-management",
+    "linear",
+    "productivity"
+  ],
   "author": "eric950907",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "body-parser": "^2.2.2",
+    "concurrently": "^9.2.1",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "multer": "^2.0.2"
+  }
 }
